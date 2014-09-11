@@ -159,7 +159,7 @@ define("list-view/list_item_view",
 
     var get = Ember.get, set = Ember.set;
 
-    var backportedInnerString = function(buffer) {
+    function backportedInnerString(buffer) {
       var content = [], childBuffers = buffer.childBuffers;
 
       Ember.ArrayPolyfills.forEach.call(childBuffers, function(buffer) {
@@ -172,7 +172,7 @@ define("list-view/list_item_view",
       });
 
       return content.join('');
-    };
+    }
 
     function willInsertElementIfNeeded(view) {
       if (view.willInsertElement) {
@@ -258,7 +258,7 @@ define("list-view/list_item_view",
       @class ListItemView
       @namespace Ember
     */
-    var ListItemView = Ember.View.extend(ListItemViewMixin, {
+    __exports__["default"] = Ember.View.extend(ListItemViewMixin, {
       updateContext: function(newContext){
         var context = get(this, 'context');
         Ember.instrument('view.updateContext.render', this, function() {
@@ -270,11 +270,11 @@ define("list-view/list_item_view",
           }
         }, this);
       },
-      rerender: function () { Ember.run.scheduleOnce('render', this, rerender); },
+      rerender: function () {
+        Ember.run.scheduleOnce('render', this, rerender);
+      },
       _contextDidChange: Ember.observer(rerender, 'context', 'controller')
     });
-
-    __exports__["default"] = ListItemView;
   });
 define("list-view/list_item_view_mixin",
   ["exports"],
@@ -306,7 +306,7 @@ define("list-view/list_item_view_mixin",
       }, this);
     }
 
-    var ListItemViewMixin = Ember.Mixin.create({
+    __exports__["default"] = Ember.Mixin.create({
       init: function(){
         this._super();
         this.one('didInsertElement', positionElement);
@@ -319,8 +319,6 @@ define("list-view/list_item_view_mixin",
       },
       _positionElement: positionElement
     });
-
-    __exports__["default"] = ListItemViewMixin;
   });
 define("list-view/list_view",
   ["list-view/list_view_helper","list-view/list_view_mixin","exports"],
@@ -426,7 +424,7 @@ define("list-view/list_view",
       @class ListView
       @namespace Ember
     */
-    var ListView = Ember.ContainerView.extend(ListViewMixin, {
+    __exports__["default"] = Ember.ContainerView.extend(ListViewMixin, {
       css: {
         position: 'relative',
         overflow: 'auto',
@@ -495,8 +493,6 @@ define("list-view/list_view",
         }
       }
     });
-
-    __exports__["default"] = ListView;
   });
 define("list-view/list_view_helper",
   ["exports"],
@@ -525,7 +521,7 @@ define("list-view/list_view_helper",
     var supports2D = transformProp !== null;
     var supports3D = perspectiveProp !== null;
 
-    var ListViewHelper = {
+    __exports__["default"] = {
       transformProp: transformProp,
       applyTransform: (function(){
         if (supports2D) {
@@ -556,8 +552,6 @@ define("list-view/list_view_helper",
         }
       })()
     };
-
-    __exports__["default"] = ListViewHelper;
   });
 define("list-view/list_view_mixin",
   ["list-view/reusable_list_item_view","exports"],
@@ -657,7 +651,7 @@ define("list-view/list_view_mixin",
       @class Ember.ListViewMixin
       @namespace Ember
     */
-    var ListViewMixin = Ember.Mixin.create({
+    __exports__["default"] = Ember.Mixin.create({
       itemViewClass: ReusableListItemView,
       emptyViewClass: Ember.View,
       classNames: ['ember-list-view'],
@@ -1277,8 +1271,6 @@ define("list-view/list_view_mixin",
         return this;
       }
     });
-
-    __exports__["default"] = ListViewMixin;
   });
 define("list-view/main",
   ["list-view/reusable_list_item_view","list-view/virtual_list_view","list-view/list_item_view","list-view/helper","list-view/list_view","list-view/list_view_helper"],
@@ -1307,7 +1299,7 @@ define("list-view/reusable_list_item_view",
 
     var get = Ember.get, set = Ember.set;
 
-    var ReusableListItemView = Ember.View.extend(ListItemViewMixin, {
+    __exports__["default"] = Ember.View.extend(ListItemViewMixin, {
       init: function(){
         this._super();
         var context = Ember.ObjectProxy.create();
@@ -1337,8 +1329,6 @@ define("list-view/reusable_list_item_view",
       },
       prepareForReuse: Ember.K
     });
-
-    __exports__["default"] = ReusableListItemView;
   });
 define("list-view/virtual_list_scroller_events",
   ["exports"],
@@ -1439,7 +1429,7 @@ define("list-view/virtual_list_scroller_events",
       window.removeEventListener(cancelEvent, handlers.cancel, true);
     }
 
-    var VirtualListScrollerEvents = Ember.Mixin.create({
+    __exports__["default"] = Ember.Mixin.create({
       init: function() {
         this.on('didInsertElement', this, 'bindScrollerEvents');
         this.on('willDestroyElement', this, 'unbindScrollerEvents');
@@ -1482,8 +1472,6 @@ define("list-view/virtual_list_scroller_events",
         return target.dispatchEvent(ev);
       }
     }
-
-    __exports__["default"] = VirtualListScrollerEvents;
   });
 define("list-view/virtual_list_view",
   ["list-view/list_view_mixin","list-view/list_view_helper","list-view/virtual_list_scroller_events","exports"],
@@ -1518,7 +1506,7 @@ define("list-view/virtual_list_view",
       @class VirtualListView
       @namespace Ember
     */
-    var VirtualListView = Ember.ContainerView.extend(ListViewMixin, VirtualListScrollerEvents, {
+    __exports__["default"] = Ember.ContainerView.extend(ListViewMixin, VirtualListScrollerEvents, {
       _isScrolling: false,
       _mouseWheel: null,
       css: {
@@ -1680,8 +1668,6 @@ define("list-view/virtual_list_view",
         return false;
       }
     });
-
-    __exports__["default"] = VirtualListView;
   });
  requireModule('list-view/main');
 })(this);
