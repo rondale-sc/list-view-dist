@@ -658,9 +658,11 @@ define("list-view/list_view_mixin",
       attributeBindings: ['style'],
       domManager: domManager,
       scrollTop: 0,
-      bottomPadding: 0,
+      bottomPadding: 0, // TODO: maybe this can go away
       _lastEndingIndex: 0,
       paddingCount: 1,
+      _cachedHeights: [0],
+      _cachedPos: 0,
 
       /**
         @private
@@ -829,6 +831,19 @@ define("list-view/list_view_mixin",
         @property {Ember.ComputedProperty} totalHeight
       */
       totalHeight: Ember.computed('content.length', 'rowHeight', 'columnCount', 'bottomPadding', function() {
+        if (typeof this.heightForIndex === 'function') {
+          return this._totalHeightWithHeightForIndex();
+        } else {
+          return this._totalHeightWithStaticRowHeight();
+       }
+      }),
+
+      _totalHeightWithHeightForIndex: function() {
+        var length = this.get('content.length');
+        return this._cachedHeightLookup(length);
+      },
+
+      _totalHeightWithStaticRowHeight: function() {
         var contentLength, rowHeight, columnCount, bottomPadding;
 
         contentLength = get(this, 'content.length');
@@ -837,7 +852,7 @@ define("list-view/list_view_mixin",
         bottomPadding = get(this, 'bottomPadding');
 
         return ((ceil(contentLength / columnCount)) * rowHeight) + bottomPadding;
-      }),
+      },
 
       /**
         @private
@@ -852,7 +867,19 @@ define("list-view/list_view_mixin",
         @method _reuseChildForContentIndex
       */
       _reuseChildForContentIndex: function(childView, contentIndex) {
-        var content, context, newContext, childsCurrentContentIndex, position, enableProfiling;
+        var content, context, newContext, childsCurrentContentIndex, position, enableProfiling, oldChildView;
+
+        var contentViewClass = this.itemViewForIndex(contentIndex);
+
+        if (childView.constructor !== contentViewClass) {
+          // rather then associative arrays, lets move childView + contentEntry maping to a Map
+          var i = this._childViews.indexOf(childView);
+
+          childView.destroy();
+          childView = this.createChildView(contentViewClass);
+
+          this.insertAt(i, childView);
+        }
 
         content = get(this, 'content');
         enableProfiling = get(this, 'enableProfiling');
@@ -874,8 +901,16 @@ define("list-view/list_view_mixin",
         @method positionForIndex
       */
       positionForIndex: function(index){
-        var elementWidth, width, columnCount, rowHeight, y, x;
+        if (typeof this.heightForIndex !== 'function'){
+          return this._singleHeightPosForIndex(index);
+        }
+        else {
+          return this._multiHeightPosForIndex(index);
+        }
+      },
 
+      _singleHeightPosForIndex: function(index){
+        var elementWidth, width, columnCount, rowHeight, y, x;
         elementWidth = get(this, 'elementWidth') || 1;
         width = get(this, 'width') || 1;
         columnCount = get(this, 'columnCount');
@@ -888,6 +923,31 @@ define("list-view/list_view_mixin",
           y: y,
           x: x
         };
+      },
+
+      // 0 maps to 0, 1 maps to heightForIndex(i)
+      _multiHeightPosForIndex: function(index){
+        var elementWidth, width, columnCount, rowHeight, y, x;
+
+        elementWidth = get(this, 'elementWidth') || 1;
+        width = get(this, 'width') || 1;
+        columnCount = get(this, 'columnCount');
+
+        x = (index % columnCount) * elementWidth;
+        y = this._cachedHeightLookup(index);
+
+        return {
+          x: x,
+          y: y
+        };
+      },
+      
+      _cachedHeightLookup: function(index) {
+        for (var i = this._cachedPos; i < index; i++){
+          this._cachedHeights[i + 1] = this._cachedHeights[i] + this.heightForIndex(i);
+        }
+        this._cachedPos = i;
+        return this._cachedHeights[index];
       },
 
       /**
@@ -1007,6 +1067,15 @@ define("list-view/list_view_mixin",
         @method _numChildViewsForViewport
       */
       _numChildViewsForViewport: function() {
+
+        if (this.heightForIndex) {
+          return this._numChildViewsForViewportWithMultiHeight();
+        } else {
+          return this._numChildViewsForViewportWithoutMultiHeight();
+        }
+      },
+
+      _numChildViewsForViewportWithoutMultiHeight:  function() {
         var height, rowHeight, paddingCount, columnCount;
 
         height = get(this, 'height');
@@ -1016,6 +1085,28 @@ define("list-view/list_view_mixin",
 
         return (ceil(height / rowHeight) * columnCount) + (paddingCount * columnCount);
       },
+
+      _numChildViewsForViewportWithMultiHeight:  function() {
+        var rowHeight, paddingCount, columnCount;
+        var scrollTop = this.scrollTop;
+        var viewportHeight = this.get('height');
+        var length = this.get('content.length');
+        var heightfromTop = 0;
+        var padding = get(this, 'paddingCount');
+
+        var startingIndex = this._calculatedStartingIndex();
+        var currentHeight = 0;
+
+        var offsetHeight = this._cachedHeightLookup(startingIndex);
+        for (var i = 0; i < length; i++) {
+          if (this._cachedHeightLookup(startingIndex + i + 1) - offsetHeight > viewportHeight) {
+            break;
+          }
+        }
+
+        return i + padding + 1;
+      },
+
 
       /**
         @private
@@ -1041,13 +1132,34 @@ define("list-view/list_view_mixin",
         rowHeight = get(this, 'rowHeight');
         columnCount = get(this, 'columnCount');
 
-        calculatedStartingIndex = floor(scrollTop / rowHeight) * columnCount;
+        if (this.heightForIndex) {
+          calculatedStartingIndex = this._calculatedStartingIndex();
+        } else {
+          calculatedStartingIndex = floor(scrollTop / rowHeight) * columnCount;
+        }
 
         var viewsNeededForViewport = this._numChildViewsForViewport();
         var paddingCount = (1 * columnCount);
         var largestStartingIndex = max(contentLength - viewsNeededForViewport, 0);
 
         return min(calculatedStartingIndex, largestStartingIndex);
+      },
+
+      _calculatedStartingIndex: function() {
+        var rowHeight, paddingCount, columnCount;
+        var scrollTop = this.scrollTop;
+        var viewportHeight = this.get('height');
+        var length = this.get('content.length');
+        var heightfromTop = 0;
+        var padding = get(this, 'paddingCount');
+
+        for (var i = 0; i < length; i++) {
+          if (this._cachedHeightLookup(i + 1) >= scrollTop){
+            break;
+          }
+        }
+        
+        return i;
       },
 
       /**
@@ -1091,11 +1203,39 @@ define("list-view/list_view_mixin",
       _addItemView: function(contentIndex){
         var itemViewClass, childView;
 
-        itemViewClass = get(this, 'itemViewClass');
+        itemViewClass = this.itemViewForIndex(contentIndex);
         childView = this.createChildView(itemViewClass);
 
         this.pushObject(childView);
-       },
+      },
+
+      /**
+        @public
+
+        Returns a view class for the provided contentIndex. If the view is
+        different then the one currently present it will remove the existing view
+        and replace it with an instance of the class provided
+
+        @param {Number} contentIndex item index in the content array
+        @method _addItemView
+        @returns {Ember.View} ember view class for this index
+      */
+      itemViewForIndex: function(contentIndex) {
+        return get(this, 'itemViewClass');
+      },
+
+      /**
+        @public
+
+        Returns a view class for the provided contentIndex. If the view is
+        different then the one currently present it will remove the existing view
+        and replace it with an instance of the class provided
+
+        @param {Number} contentIndex item index in the content array
+        @method _addItemView
+        @returns {Ember.View} ember view class for this index
+      */
+      heightForIndex: null,
 
       /**
         @private
