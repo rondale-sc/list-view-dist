@@ -842,6 +842,10 @@ define("list-view/list_view_mixin",
        }
       }),
 
+      _rowHeightDidChange: Ember.observer('rowHeight', function() {
+        Ember.run.once(this, this._syncChildViews);
+      }),
+
       _totalHeightWithHeightForIndex: function() {
         var length = this.get('content.length');
         return this._cachedHeightLookup(length);
@@ -945,7 +949,7 @@ define("list-view/list_view_mixin",
           y: y
         };
       },
-      
+
       _cachedHeightLookup: function(index) {
         for (var i = this._cachedPos; i < index; i++){
           this._cachedHeights[i + 1] = this._cachedHeights[i] + this.heightForIndex(i);
@@ -1162,7 +1166,7 @@ define("list-view/list_view_mixin",
             break;
           }
         }
-        
+
         return i;
       },
 
