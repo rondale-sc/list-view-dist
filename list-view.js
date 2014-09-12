@@ -656,6 +656,7 @@ define("list-view/list_view_mixin",
       emptyViewClass: Ember.View,
       classNames: ['ember-list-view'],
       attributeBindings: ['style'],
+      classNameBindings: ['_isGrid:ember-list-view-grid:ember-list-view-list'],
       domManager: domManager,
       scrollTop: 0,
       bottomPadding: 0, // TODO: maybe this can go away
@@ -664,6 +665,9 @@ define("list-view/list_view_mixin",
       _cachedHeights: [0],
       _cachedPos: 0,
 
+      _isGrid: Ember.computed('columnCount', function() {
+        return this.get('columnCount') > 1;
+      }).readOnly(),
       /**
         @private
 
