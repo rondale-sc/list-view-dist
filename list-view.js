@@ -1093,6 +1093,7 @@ define("list-view/list_view_mixin",
       _numChildViewsForViewport:  function() {
         var height = get(this, 'height');
         var width = get(this, 'width');
+        // TODO: defer padding calculation to the bin
         var paddingCount = get(this, 'paddingCount');
         var columnCount = get(this, 'columnCount');
         var scrollTop = this.get('scrollTop');
