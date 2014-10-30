@@ -730,8 +730,8 @@ test("should perform correct number of renders and repositions while short list 
     view.scrollTo(scrollTop);
   });
 
-  equal(renders, 14, "The correct number of renders occured");
-  equal(positions, 21, "The correct number of positions occured");
+  equal(renders, 13, "The correct number of renders occured");
+  equal(positions, 20, "The correct number of positions occured");
 });
 
 test("should perform correct number of renders and repositions on long list init", function () {
@@ -930,18 +930,18 @@ test("height and width change after with scroll – simple", function(){
   // x x  --|
   // + +
   // 0 0
-  var content = helper.generateContent(10),
-      width = 100,
-      height = 150,
-      rowHeight = 50,
-      elementWidth = 50,
-      itemViewClass = Ember.ListItemView.extend({
-        template: Ember.Handlebars.compile("A:{{name}}{{view view.NestedViewClass}}"),
-        NestedViewClass: Ember.View.extend({
-          tagName: 'span',
-          template: Ember.Handlebars.compile("B:{{name}}")
-        })
-      });
+  var content = helper.generateContent(10);
+  var width = 100;
+  var height = 150;
+  var rowHeight = 50;
+  var elementWidth = 50;
+  var itemViewClass = Ember.ListItemView.extend({
+    template: Ember.Handlebars.compile("A:{{name}}{{view view.NestedViewClass}}"),
+    NestedViewClass: Ember.View.extend({
+      tagName: 'span',
+      template: Ember.Handlebars.compile("B:{{name}}")
+    })
+  });
 
   view = Ember.ListView.create({
     content: content,
@@ -956,10 +956,10 @@ test("height and width change after with scroll – simple", function(){
   appendView();
 
   deepEqual(helper.itemPositions(view), [
-            { x:  0, y:    0 }, { x: 50, y:    0 },
-            { x:  0, y:   50 }, { x: 50, y:   50 },
-            { x:  0, y:  100 }, { x: 50, y:  100 },
-            { x:  0, y:  150 }, { x: 50, y:  150 }
+            { x:  0, y:    0 }, { x: 50, y:    0 }, // <- visible
+            { x:  0, y:   50 }, { x: 50, y:   50 }, // <- visible
+            { x:  0, y:  100 }, { x: 50, y:  100 }, // <- visible
+            { x:  0, y:  150 }, { x: 50, y:  150 }  // <- buffer
             ], "initial render: The rows are rendered in the correct positions");
 
   equal(view.$('.ember-list-item-view').length, 8, "initial render: The correct number of rows were rendered");
@@ -997,22 +997,22 @@ test("height and width change after with scroll – simple", function(){
   // x x x --|
   // x o o --|- viewport
 
-  equal(view.$('.ember-list-item-view').length, 9, "after width + height change: the correct number of rows were rendered");
+  equal(view.$('.ember-list-item-view').length, 4, "after width + height change: the correct number of rows were rendered");
 
   deepEqual(helper.itemPositions(view), [
-    /*              */  { x:  50, y:   0 }, { x: 100, y:   0 },
-    { x:   0, y:  50 }, { x:  50, y:  50 }, { x: 100, y:  50 },
+    // /*              */  { x:  50, y:   0 }, { x: 100, y:   0 },
+    // { x:   0, y:  50 }, { x:  50, y:  50 }, { x: 100, y:  50 },
     { x:   0, y: 100 }, { x:  50, y: 100 }, { x: 100, y: 100 },
     { x:   0, y: 150 }], "after width + height change: The rows are in the correct positions");
 
   var sortedElements = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
   var texts = Ember.$.map(sortedElements, function(el){ return Ember.$(el).text(); });
   deepEqual(texts, [
-    'A:Item 2B:Item 2',
-    'A:Item 3B:Item 3',
-    'A:Item 4B:Item 4',
-    'A:Item 5B:Item 5',
-    'A:Item 6B:Item 6',
+    // 'A:Item 2B:Item 2',
+    // 'A:Item 3B:Item 3',
+    // 'A:Item 4B:Item 4',
+    // 'A:Item 5B:Item 5',
+    // 'A:Item 6B:Item 6',
     'A:Item 7B:Item 7',
     'A:Item 8B:Item 8',
     'A:Item 9B:Item 9',
@@ -1028,12 +1028,12 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   // +
   // 0
   // 0
-  var content = helper.generateContent(5),
-      width = 50,
-      height = 100,
-      rowHeight = 50,
-      elementWidth = 50,
-      itemViewClass = Ember.ListItemView.extend({
+  var content = helper.generateContent(5);
+  var width = 50;
+  var height = 100;
+  var rowHeight = 50;
+  var elementWidth = 50;
+  var itemViewClass = Ember.ListItemView.extend({
         template: Ember.Handlebars.compile("A:{{name}}{{view view.NestedViewClass}}"),
         NestedViewClass: Ember.View.extend({
           tagName: 'span',
@@ -1092,10 +1092,10 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   // x x --|
   // x o --|- viewport
   // o
-  equal(view.$('.ember-list-item-view').length, 5, "after width + height change: the correct number of rows were rendered");
+  equal(view.$('.ember-list-item-view').length, 3, "after width + height change: the correct number of rows were rendered");
 
   deepEqual(helper.itemPositions(view), [
-    { x: 0, y:   0 }, { x: 50, y:   0 },
+    // { x: 0, y:   0 }, { x: 50, y:   0 },
     { x: 0, y:  50 }, { x: 50, y:  50 },
     { x: 0, y: 100 }
   ], "The rows are in the correct positions");
@@ -1104,21 +1104,21 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   var texts = Ember.$.map(sortedElements, function(el){ return Ember.$(el).text(); });
 
   deepEqual(texts, [
-    'A:Item 1B:Item 1', 'A:Item 2B:Item 2',
+    // 'A:Item 1B:Item 1', 'A:Item 2B:Item 2',
     'A:Item 3B:Item 3', 'A:Item 4B:Item 4',
     'A:Item 5B:Item 5'
   ], 'elements should be rendered in expected position');
 });
 
 test("elementWidth change", function(){
-  var i,
-      positionSorted,
-      content = helper.generateContent(100),
-      height = 200,
-      width = 200,
-      rowHeight = 50,
-      elementWidth = 100,
-      itemViewClass = Ember.ListItemView.extend({
+  var i;
+  var positionSorted;
+  var content = helper.generateContent(100);
+  var height = 200;
+  var width = 200;
+  var rowHeight = 50;
+  var elementWidth = 100;
+  var itemViewClass = Ember.ListItemView.extend({
         template: Ember.Handlebars.compile("{{name}}")
       });
 
@@ -1182,11 +1182,11 @@ test("elementWidth change", function(){
   positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
 
   deepEqual(helper.itemPositions(view), [
-            { x: 0, y: 0},
-            { x: 0, y: 50},
-            { x: 0, y: 100},
-            { x: 0, y: 150},
-            { x: 0, y: 200}
+            { x: 0, y:   0 },
+            { x: 0, y:  50 },
+            { x: 0, y: 100 },
+            { x: 0, y: 150 },
+            { x: 0, y: 200 }
   ], "The rows are in the correct positions");
 
   for(i = 0; i < 5; i++) {
@@ -1515,11 +1515,11 @@ test("handle strange ratios between height/rowHeight", function() {
   equal(view.$('.ember-list-item-view').length, 5);
 
   deepEqual(helper.itemPositions(view), [
-    { x:0, y:   0 },
-    { x:0, y:  73 },
-    { x:0, y: 146 },
-    { x:0, y: 219 },
-    { x:0, y: 292 }
+    { x: 0, y:   0 },
+    { x: 0, y:  73 },
+    { x: 0, y: 146 },
+    { x: 0, y: 219 },
+    { x: 0, y: 292 }
   ] , "went beyond scroll max via overscroll");
 
   var i;
@@ -1534,7 +1534,8 @@ test("handle strange ratios between height/rowHeight", function() {
 
   // expected
   // -----
-  // 0   |
+  // 0   | <-- buffer (since we jump straight to top: 1000)
+  // -----
   // 1   |
   // 2   |
   // 3   |
@@ -1545,7 +1546,7 @@ test("handle strange ratios between height/rowHeight", function() {
   // 8   |
   // 9   |
   // ----
-  // 10  | <- buffer
+  // 10  | <- (would be nice if this was the buffer, but it would be if we scrolled incrementally and didnt jump)
   // ----
   // 11  | <-- partially visible
   // 12  | <--- visible
@@ -1553,14 +1554,15 @@ test("handle strange ratios between height/rowHeight", function() {
   // 14  |
   // ----
   deepEqual(helper.itemPositions(view), [
-    { x:0, y:  730 }, // <-- buffer
-    { x:0, y:  803 }, // <-- partially visible
-    { x:0, y:  876 }, // <-- in view
-    { x:0, y:  949 }, // <-- in view
-    { x:0, y: 1022 }  // <-- in view
+    { x: 0, y:    0 }, // <-- buffer
+    { x: 0, y:  803 }, // <-- partially visible
+    { x: 0, y:  876 }, // <-- in view
+    { x: 0, y:  949 }, // <-- in view
+    { x: 0, y: 1022 }  // <-- in view
   ], "went beyond scroll max via overscroll");
 
-  equal(Ember.$(positionSorted[0]).text(), "Name: Item 11");
+  equal(Ember.$(positionSorted[0]).text(), "Name: Item 1");
+
   equal(Ember.$(positionSorted[1]).text(), "Name: Item 12");
   equal(Ember.$(positionSorted[2]).text(), "Name: Item 13");
   equal(Ember.$(positionSorted[3]).text(), "Name: Item 14");
@@ -1753,7 +1755,7 @@ test("Correct height based on content", function() {
   equal(view.get('totalHeight'), 3350);
 
   var positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
-  equal(view.$('.ember-list-item-view').length, 4);
+  equal(view.$('.ember-list-item-view').length, 5);
 
   var i, contentIdx;
 
@@ -1766,7 +1768,8 @@ test("Correct height based on content", function() {
     { x:0, y:    0 }, // <-- in view
     { x:0, y:  100 }, // <-- in view
     { x:0, y:  200 }, // <-- in view
-    { x:0, y:  350 }  // <-- buffer
+    { x:0, y:  350 }, // <-- buffer
+    { x:0, y:  400 }  // <-- buffer
   ], 'went beyond scroll max via overscroll');
 
   Ember.run(view, 'scrollTo', 1000);
@@ -1778,10 +1781,11 @@ test("Correct height based on content", function() {
   equal(Ember.$(positionSorted[3]).text(), "Potato says Xbar expected: other === other 15");
 
   deepEqual(helper.itemPositions(view), [
-    { x:0, y: 950 }, // <-- partially in view
+    { x:0, y:  950 }, // <-- partially in view
     { x:0, y: 1100 }, // <-- in view
     { x:0, y: 1150 }, // <-- in view
-    { x:0, y: 1250 }  // <-- partially in view
+    { x:0, y: 1250 }, // <-- partially in view
+    { x:0, y: 1400 }  // <-- partially in view
   ], 'went beyond scroll max via overscroll');
 });
 
@@ -1820,7 +1824,7 @@ test("with 100% width groups", function() {
   equal(view.get('totalHeight'), 550);
 
   var positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
-  equal(view.$('.ember-list-item-view').length, 3);
+  equal(view.$('.ember-list-item-view').length, 4);
 
   var i, contentIdx;
 
@@ -1832,19 +1836,22 @@ test("with 100% width groups", function() {
     { x:   0, y:   0 }, // <-- in view
     { x: 100, y:   0 }, // <-- in view
     { x:  0,  y: 100 }, // <-- buffer
+    { x:  0,  y: 125 }, // <-- buffer
   ], '');
 
   Ember.run(view, 'scrollTo', 100);
   positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
 
-  equal(Ember.$(positionSorted[0]).text(), 'Caroline#2');
-  equal(Ember.$(positionSorted[1]).text(), 'David#3');
-  equal(Ember.$(positionSorted[2]).text(), 'Xbar#4');
+  equal(Ember.$(positionSorted[0]).text(), 'Xbar#1');
+  equal(Ember.$(positionSorted[1]).text(), 'Caroline#2');
+  equal(Ember.$(positionSorted[2]).text(), 'David#3');
+  equal(Ember.$(positionSorted[3]).text(), 'Xbar#4');
 
   deepEqual(helper.itemPositions(view), [
-    { x: 0, y: 100 }, // <-- in-view
-    { x: 0, y: 125 }, // <-- buffer
-    { x: 0, y: 225 }  // <-- buffer
+    { x: 100, y:   0 }, // <-- in-view
+    { x:   0, y: 100 }, // <-- in-view
+    { x:   0, y: 125 }, // <-- buffer
+    { x:   0, y: 225 }  // <-- buffer
   ], '');
 });
 
@@ -1947,7 +1954,7 @@ test("Correct height based on content", function() {
   equal(view.get('totalHeight'), 3350);
 
   var positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
-  equal(view.$('.ember-list-item-view').length, 4);
+  equal(view.$('.ember-list-item-view').length, 5);
 
   var i, contentIdx;
 
@@ -1957,10 +1964,11 @@ test("Correct height based on content", function() {
   equal(Ember.$(positionSorted[3]).text(), "Woof says Caroline expected: dog === dog 5");
 
   deepEqual(helper.itemPositions(view), [
-    { x:0, y:    0 }, // <-- in view
-    { x:0, y:  100 }, // <-- in view
-    { x:0, y:  200 }, // <-- in view
-    { x:0, y:  350 }  // <-- buffer
+    { x: 0, y:    0 }, // <-- in view
+    { x: 0, y:  100 }, // <-- in view
+    { x: 0, y:  200 }, // <-- in view
+    { x: 0, y:  350 }, // <-- buffer
+    { x: 0, y:  400 }, // <-- buffer
   ], 'went beyond scroll max via overscroll');
 
   Ember.run(view, 'scrollTo', 1000);
@@ -1972,10 +1980,11 @@ test("Correct height based on content", function() {
   equal(Ember.$(positionSorted[3]).text(), "Potato says Xbar expected: other === other 15");
 
   deepEqual(helper.itemPositions(view), [
-    { x:0, y: 950 }, // <-- partially in view
+    { x:0, y:  950 }, // <-- partially in view
     { x:0, y: 1100 }, // <-- in view
     { x:0, y: 1150 }, // <-- in view
-    { x:0, y: 1250 }  // <-- partially in view
+    { x:0, y: 1250 }, // <-- partially in view
+    { x:0, y: 1400 }  // <-- partially in view
   ], 'went beyond scroll max via overscroll');
 });
 
@@ -2047,7 +2056,7 @@ test("Correct height based on view", function() {
   equal(view.get('totalHeight'), 3350);
 
   var positionSorted = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
-  equal(view.$('.ember-list-item-view').length, 4);
+  equal(view.$('.ember-list-item-view').length, 5);
 
   var i, contentIdx;
 
@@ -2060,7 +2069,8 @@ test("Correct height based on view", function() {
     { x:0, y:    0 }, // <-- in view
     { x:0, y:  100 }, // <-- in view
     { x:0, y:  200 }, // <-- in view
-    { x:0, y:  350 }  // <-- buffer
+    { x:0, y:  350 }, // <-- buffer
+    { x:0, y:  400 }  // <-- buffer
   ], 'went beyond scroll max via overscroll');
 
   Ember.run(view, 'scrollTo', 1000);
@@ -2075,7 +2085,8 @@ test("Correct height based on view", function() {
     { x:0, y:  950 }, // <-- partially in view
     { x:0, y: 1100 }, // <-- in view
     { x:0, y: 1150 }, // <-- in view
-    { x:0, y: 1250 }  // <-- partially in view
+    { x:0, y: 1250 }, // <-- partially in view
+    { x:0, y: 1400 }  // <-- partially in view
   ], 'went beyond scroll max via overscroll');
 });
 
@@ -2144,7 +2155,7 @@ test("_numChildViewsForViewport + _startingIndex with multi-height", function() 
 
   appendView();
 
-  equal(view._numChildViewsForViewport(), 4, 'expected _numChildViewsForViewport to be correct (before scroll)');
+  equal(view._numChildViewsForViewport(), 5, 'expected _numChildViewsForViewport to be correct (before scroll)');
   equal(view._startingIndex(), 0, 'expected _startingIndex to be correct (before scroll)');
 
   // entries: 1, 3, 4, 5
@@ -2153,7 +2164,7 @@ test("_numChildViewsForViewport + _startingIndex with multi-height", function() 
 
   // entries: 12, 13, 14, 15
 
-  equal(view._numChildViewsForViewport(), 4, 'expected _numChildViewsForViewport to be correct (after scroll)');
+  equal(view._numChildViewsForViewport(), 5, 'expected _numChildViewsForViewport to be correct (after scroll)');
   equal(view._startingIndex(), 10, 'expected _startingIndex to be correct (after scroll)');
 });
 
@@ -2982,14 +2993,14 @@ test("recycling complex views with ReusableListItemView, handling empty slots at
     view.set('width', 150);
   });
 
-  equal(view.$('.ember-list-item-view').length, 11, "The correct number of items were rendered (post-expand to 3 columns)");
+  equal(view.$('.ember-list-item-view').length, 8, "The correct number of items were rendered (post-expand to 3 columns)");
 
-  equal(listItemViewInsertionCount, 3, "expected number of listItemView's didInsertElement (post-expand to 3 columns)");
+  equal(listItemViewInsertionCount, 0, "expected number of listItemView's didInsertElement (post-expand to 3 columns)");
   equal(listItemViewDestroyCount, 0, "expected number of listItemView's willDestroyElement (post-expand to 3 columns)");
-  equal(innerViewInsertionCount, 3, "expected number of innerView's didInsertElement (post-expand to 3 columns)");
+  equal(innerViewInsertionCount, 0, "expected number of innerView's didInsertElement (post-expand to 3 columns)");
   equal(innerViewDestroyCount, 0, "expected number of innerView's willDestroyElement (post-expand to 3 columns)");
 
-  equal(view.$('.ember-list-item-view:visible').length, 11, "The number of items that are not hidden with display:none (post-expand to 3 columns)");
+  equal(view.$('.ember-list-item-view:visible').length, 8, "The number of items that are not hidden with display:none (post-expand to 3 columns)");
 });
 
 var view, helper;
@@ -3042,7 +3053,7 @@ test("scroll but within content length", function(){
     scrollTop: 100
   });
 
-  equal(view.get('scrollTop'), 100);
+  equal(view.get('scrollTop'), 0);
 
   Ember.run(function(){
     view.set('width', 150);
@@ -3063,7 +3074,7 @@ test("scroll but beyond content length", function(){
     scrollTop: 1000
   });
 
-  equal(view.get('scrollTop'), 1000);
+  equal(view.get('scrollTop'), 0);
 
   Ember.run(function(){
     view.set('width', 150);
@@ -3117,7 +3128,7 @@ test("scroll but within content length", function(){
     scrollTop: 100
   });
 
-  equal(view._startingIndex(), 2);
+  equal(view._startingIndex(), 0);
 });
 
 test("scroll but beyond content length", function(){
@@ -3132,7 +3143,7 @@ test("scroll but beyond content length", function(){
     scrollTop: 1000
   });
 
-  equal(view._startingIndex(), 5);
+  equal(view._startingIndex(), 0);
 });
 
 
@@ -3149,7 +3160,7 @@ test("larger list", function(){
     scrollTop: 1000
   });
 
-  equal(view._startingIndex(), 38);
+  equal(view._startingIndex(), 30);
 });
 
 test("larger list", function(){
@@ -3915,21 +3926,21 @@ test("height and width change after with scroll – simple", function(){
   // x x x --|
   // x o o --|- viewport
 
-  equal(view.$('.ember-list-item-view').length, 9, "after width + height change: the correct number of rows were rendered");
+  equal(view.$('.ember-list-item-view').length, 4, "after width + height change: the correct number of rows were rendered");
   deepEqual(helper.itemPositions(view), [
-    /*              */  { x:  50, y:   0 }, { x: 100, y:   0 },
-    { x:   0, y:  50 }, { x:  50, y:  50 }, { x: 100, y:  50 },
+    // /*              */  { x:  50, y:   0 }, { x: 100, y:   0 },
+    // { x:   0, y:  50 }, { x:  50, y:  50 }, { x: 100, y:  50 },
     { x:   0, y: 100 }, { x:  50, y: 100 }, { x: 100, y: 100 },
     { x:   0, y: 150 }], "after width + height change: The rows are in the correct positions");
 
   var sortedElements = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
   var texts = Ember.$.map(sortedElements, function(el){ return Ember.$(el).text(); });
   deepEqual(texts, [
-    'A:Item 2B:Item 2',
-    'A:Item 3B:Item 3',
-    'A:Item 4B:Item 4',
-    'A:Item 5B:Item 5',
-    'A:Item 6B:Item 6',
+    // 'A:Item 2B:Item 2',
+    // 'A:Item 3B:Item 3',
+    // 'A:Item 4B:Item 4',
+    // 'A:Item 5B:Item 5',
+    // 'A:Item 6B:Item 6',
     'A:Item 7B:Item 7',
     'A:Item 8B:Item 8',
     'A:Item 9B:Item 9',
@@ -3945,12 +3956,12 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   // +
   // 0
   // 0
-  var content = helper.generateContent(5),
-      width = 50,
-      height = 100,
-      rowHeight = 50,
-      elementWidth = 50,
-      itemViewClass = Ember.ListItemView.extend({
+  var content = helper.generateContent(5);
+  var width = 50;
+  var height = 100;
+  var rowHeight = 50;
+  var elementWidth = 50;
+  var itemViewClass = Ember.ListItemView.extend({
         template: Ember.Handlebars.compile("A:{{name}}{{view view.NestedViewClass}}"),
         NestedViewClass: Ember.View.extend({
           tagName: 'span',
@@ -4006,13 +4017,12 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   // x: visible, +: padding w/ element, 0: element not-drawn, o: padding w/o element
   //
   // 0 0
-  // x x --|
-  // x o --|- viewport
-  // o
-  equal(view.$('.ember-list-item-view').length, 5, "after width + height change: the correct number of rows were rendered");
+  // 0 0
+  // x x --|- viewport
+  // x   --|
+  equal(view.$('.ember-list-item-view').length, 3, "after width + height change: the correct number of rows were rendered");
 
   deepEqual(helper.itemPositions(view), [
-    { x: 0, y:   0 }, { x: 50, y:   0 },
     { x: 0, y:  50 }, { x: 50, y:  50 },
     { x: 0, y: 100 }
   ], "The rows are in the correct positions");
@@ -4020,7 +4030,6 @@ test("height and width change after with scroll – 1x2 -> 2x2 with 5 items", fu
   var sortedElements = helper.sortElementsByPosition(view.$('.ember-list-item-view'));
   var texts = Ember.$.map(sortedElements, function(el){ return Ember.$(el).text(); });
   deepEqual(texts, [
-    'A:Item 1B:Item 1', 'A:Item 2B:Item 2',
     'A:Item 3B:Item 3', 'A:Item 4B:Item 4',
     'A:Item 5B:Item 5'
   ], 'elements should be rendered in expected position');

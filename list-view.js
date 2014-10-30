@@ -675,15 +675,22 @@ define("list-view/list_view_mixin",
       emptyViewClass: Ember.View,
       classNames: ['ember-list-view'],
       attributeBindings: ['style'],
-      classNameBindings: ['_isGrid:ember-list-view-grid:ember-list-view-list'],
+      classNameBindings: [
+        '_isGrid:ember-list-view-grid:ember-list-view-list',
+        '_isShelf:ember-list-view-shelf',
+        '_isFixed:ember-list-view-fixed'
+      ],
       domManager: domManager,
       scrollTop: 0,
-      bottomPadding: 0, // TODO: maybe this can go away
+      bottomPadding: 0,
       _lastEndingIndex: 0,
-      paddingCount: 1,
 
-      _isGrid: Ember.computed('columnCount', function() {
-        return this.get('columnCount') > 1;
+      isShelf: false,
+      isFixed: false,
+
+      // TODO: this needs to be invalidated when content changes.
+      _isGrid: Ember.computed('width', function() {
+        return this._bin.isGrid(this.get('width'));
       }).readOnly(),
 
       /**
@@ -699,8 +706,6 @@ define("list-view/list_view_mixin",
         this._super();
         this.width = this.width || 0;
         this._bin = this._setupBin();
-        this.on('didInsertElement', this._syncListContainerWidth);
-        this.columnCountDidChange();
         this._syncChildViews();
         this._addContentArrayObserver();
       },
@@ -714,6 +719,7 @@ define("list-view/list_view_mixin",
       },
 
       _setupShelfFirstBin: function() {
+        set(this, '_isShelf', true);
         // detect which bin we need
         var bin = new Bin.ShelfFirst([], this.get('width'), 0);
         var list = this;
@@ -738,6 +744,7 @@ define("list-view/list_view_mixin",
       },
 
       _setupFixedGridBin: function() {
+        set(this, '_isFixed', true);
         // detect which bin we need
         var bin = new Bin.FixedGrid([], 0, 0);
         var list = this;
@@ -906,6 +913,17 @@ define("list-view/list_view_mixin",
 
       },
 
+      _doElementDimensionChange: function() {
+        // flush bin
+        this._bin.flush(0);
+        Ember.propertyDidChange(this, 'isGrid');
+        Ember.run.once(this, this._syncChildViews);
+      },
+
+      _elementDimensionDidChange: Ember.beforeObserver('elementWidth', 'rowHeight', 'width', 'height', function() {
+        this._doElementDimensionChange();
+      }),
+
       /**
         @private
 
@@ -917,18 +935,9 @@ define("list-view/list_view_mixin",
       totalHeight: Ember.computed('content.length',
                                   'width',
                                   'rowHeight',
+                                  'elementWidth',
                                   'bottomPadding', function() {
         return this._bin.height(this.get('width')) + this.get('bottomPadding');
-      }),
-
-      _doRowHeightDidChange: function() {
-        // flush bin
-        this._bin.flush(0);
-        this._syncChildViews();
-      },
-
-      _rowHeightDidChange: Ember.observer('rowHeight', function() {
-        Ember.run.once(this, this._doRowHeightDidChange);
       }),
 
       /**
@@ -1007,70 +1016,6 @@ define("list-view/list_view_mixin",
       /**
         @private
 
-        Returns a number of columns in the Ember.ListView (for grid layout).
-
-        If you want to have a multi column layout, you need to specify both
-        `width` and `elementWidth`.
-
-        If no `elementWidth` is specified, it returns `1`. Otherwise, it will
-        try to fit as many columns as possible for a given `width`.
-
-        @property {Ember.ComputedProperty} columnCount
-      */
-      columnCount: Ember.computed('width', 'elementWidth', function() {
-        // i don't think this really makes sense.
-        var elementWidth, width, count;
-
-        elementWidth = get(this, 'elementWidth');
-        width = get(this, 'width');
-
-        if (elementWidth && width > elementWidth) {
-          count = floor(width / elementWidth);
-        } else {
-          count = 1;
-        }
-
-        return count;
-      }),
-
-      /**
-        @private
-
-        Fires every time column count is changed.
-
-        @event columnCountDidChange
-      */
-      columnCountDidChange: Ember.observer(function() {
-        var ratio, currentScrollTop, proposedScrollTop, maxScrollTop,
-            scrollTop, lastColumnCount, newColumnCount, element;
-
-        lastColumnCount = this._lastColumnCount;
-
-        currentScrollTop = this.scrollTop;
-        newColumnCount = get(this, 'columnCount');
-        maxScrollTop = get(this, 'maxScrollTop');
-        element = get(this, 'element');
-
-        this._lastColumnCount = newColumnCount;
-
-        if (lastColumnCount) {
-          ratio = (lastColumnCount / newColumnCount);
-          proposedScrollTop = currentScrollTop * ratio;
-          scrollTop = min(maxScrollTop, proposedScrollTop);
-
-          this._scrollTo(scrollTop);
-          this.scrollTop = scrollTop;
-        }
-
-        if (arguments.length > 0) {
-          // invoked by observer
-          Ember.run.schedule('afterRender', this, this._syncListContainerWidth);
-        }
-      }, 'columnCount'),
-
-      /**
-        @private
-
         Computes max possible scrollTop value given the visible viewport
         and scrollable container div height.
 
@@ -1113,17 +1058,9 @@ define("list-view/list_view_mixin",
         var height = get(this, 'height');
         var width = get(this, 'width');
         // TODO: defer padding calculation to the bin
-        var paddingCount = get(this, 'paddingCount');
-        var columnCount = get(this, 'columnCount');
         var scrollTop = this.get('scrollTop');
 
-        var padding = (paddingCount * columnCount);
-
-        var numVisible = this._bin.numberVisibleWithin(scrollTop, width, height);
-        
-        if (numVisible > 0 ) { 
-          numVisible += padding;
-        }
+        var numVisible = this._bin.numberVisibleWithin(scrollTop, width, height, true);
 
         return numVisible;
       },
@@ -1139,7 +1076,7 @@ define("list-view/list_view_mixin",
         @method _startingIndex
       */
       _startingIndex: function(_contentLength) {
-        var scrollTop, rowHeight, columnCount, calculatedStartingIndex,
+        var scrollTop, rowHeight, calculatedStartingIndex,
             contentLength;
 
         if (_contentLength === undefined) {
@@ -1150,12 +1087,10 @@ define("list-view/list_view_mixin",
 
         scrollTop = this.scrollTop;
         rowHeight = get(this, 'rowHeight');
-        columnCount = get(this, 'columnCount');
 
         calculatedStartingIndex  = this._bin.visibleStartingIndex(scrollTop, this.get('width'));
 
         var viewsNeededForViewport = this._numChildViewsForViewport();
-        var paddingCount = (1 * columnCount);
         var largestStartingIndex = max(contentLength - viewsNeededForViewport, 0);
 
         return min(calculatedStartingIndex, largestStartingIndex);
@@ -1188,7 +1123,7 @@ define("list-view/list_view_mixin",
         @private
         @property {Function} needsSyncChildViews
       */
-      needsSyncChildViews: Ember.observer(syncChildViews, 'height', 'width', 'columnCount'),
+      needsSyncChildViews: Ember.observer(syncChildViews, 'height', 'width', 'rowHeight', 'elementWidth'),
 
       /**
         @private
@@ -1243,6 +1178,30 @@ define("list-view/list_view_mixin",
 
         @method _syncChildViews
        **/
+      _syncScrollTop: function() {
+        var newNumber = this._numChildViewsForViewport();
+        var oldNumber = this._oldNumberOfViewsNeededForViewport;
+
+        if (oldNumber !== newNumber) {
+          var maxScrollTop = get(this, 'maxScrollTop');
+          var currentScrollTop = this.scrollTop;
+          var scrollTop = min(maxScrollTop, currentScrollTop * oldNumber/newNumber);
+
+          if (scrollTop === scrollTop) {
+            this._scrollTo(scrollTop);
+            this.scrollTop = scrollTop;
+          } else {
+            scrollTop = min(maxScrollTop, currentScrollTop);
+            this._scrollTo(scrollTop);
+            this.scrollTop = scrollTop;
+            // scrollTop was NaN;
+          }
+
+          this._oldNumberOfViewsNeededForViewport = newNumber;
+        }
+
+      },
+
       _syncChildViews: function(){
         var childViews, childViewCount,
             numberOfChildViews, numberOfChildViewsNeeded,
@@ -1252,6 +1211,8 @@ define("list-view/list_view_mixin",
         if (get(this, 'isDestroyed') || get(this, 'isDestroying')) {
           return;
         }
+
+        this._syncScrollTop();
 
         contentLength = get(this, 'content.length');
         emptyView = get(this, 'emptyView');
@@ -1271,7 +1232,7 @@ define("list-view/list_view_mixin",
 
         delta = numberOfChildViewsNeeded - numberOfChildViews;
 
-        if (delta === 0) {
+           if (delta === 0) {
           // no change
         } else if (delta > 0) {
           // more views are needed
@@ -1296,27 +1257,6 @@ define("list-view/list_view_mixin",
 
         if (contentLength === 0 || contentLength === undefined) {
           addEmptyView.call(this);
-        }
-      },
-
-      /**
-        @private
-
-        Applies an inline width style to the list container.
-
-        @method _syncListContainerWidth
-       **/
-      _syncListContainerWidth: function() {
-        var elementWidth, columnCount, containerWidth, element;
-
-        elementWidth = get(this, 'elementWidth');
-        columnCount = get(this, 'columnCount');
-        containerWidth = elementWidth * columnCount;
-        element = this.$('.ember-list-container');
-
-        // needs to change, actually should be the known  upfront
-        if (containerWidth && element) {
-          element.css('width', containerWidth);
         }
       },
 
@@ -1383,6 +1323,7 @@ define("list-view/list_view_mixin",
         state = this._state || this.state;
 
         this._bin.flush(start);
+        Ember.propertyDidChange(this, 'isGrid');
         var length = this.get('content.length');
 
         if (state === 'inDOM') {
