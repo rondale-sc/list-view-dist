@@ -566,6 +566,22 @@ define("list-view/list_view_mixin",
         ceil = Math.ceil,
         forEach = Ember.EnumerableUtils.forEach;
 
+    function DimensionError(name, dimension) {
+      Error.call(this);
+      this.message = "Invalid " + name + ": `" +  dimension+ "`";
+      this.dimension = dimension;
+    }
+
+    DimensionError.prototype = Object.create(Error.prototype);
+
+    function validateDimension(name, dimension) {
+      if (dimension <= 0 || typeof dimension !== 'number' || dimension !== dimension) {
+        throw new DimensionError(name, dimension);
+      }
+
+      return dimension;
+    }
+
     function integer(key, value) {
       if (arguments.length > 1) {
         var ret;
@@ -730,14 +746,14 @@ define("list-view/list_view_mixin",
 
         bin.widthAtIndex = function(index) {
           if (list.widthForIndex) {
-            return list.widthForIndex(index);
+            return validateDimension('width', list.widthForIndex(index));
           } else {
             return Infinity;
           }
         };
 
         bin.heightAtIndex = function(index) {
-          return list.heightForIndex(index);
+          return validateDimension('height', list.heightForIndex(index));
         };
 
         return bin;
@@ -754,11 +770,15 @@ define("list-view/list_view_mixin",
         };
 
         bin.widthAtIndex = function() {
-          return list.get('elementWidth');
+          var ret = list.get('elementWidth');
+          if (ret === undefined) {
+             return ret;
+          }
+          return validateDimension('elementWidth', ret);
         };
 
         bin.heightAtIndex = function() {
-          return list.get('rowHeight');
+          return validateDimension('rowHeight', list.get('rowHeight'));
         };
 
         return bin;
@@ -787,13 +807,7 @@ define("list-view/list_view_mixin",
       height: Ember.computed(integer),
       width: Ember.computed(integer),
       rowHeight: Ember.computed(integer),
-
-      willInsertElement: function() {
-        if (!this.get("height") || !this.get("rowHeight") && !this.heightForIndex) {
-          throw new Error("A ListView must be created with a height and a rowHeight.");
-        }
-        this._super();
-      },
+      elementWidth: Ember.computed(integer),
 
       /**
         @private

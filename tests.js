@@ -1417,7 +1417,7 @@ test("Creating a ListView without height and rowHeight properties should throw a
 
     appendView();
   },
-  /A ListView must be created with a height and a rowHeight./, "Throws exception.");
+  /Invalid rowHeight: `undefined`/);
 });
 
 test("Creating a ListView without height and rowHeight properties should throw an exception", function() {
@@ -1428,7 +1428,7 @@ test("Creating a ListView without height and rowHeight properties should throw a
 
     appendView();
   },
-  /A ListView must be created with a height and a rowHeight./, "Throws exception.");
+  /Invalid rowHeight: `undefined`/);
 });
 
 test("should trigger scrollYChanged correctly", function () {
@@ -4365,5 +4365,5 @@ test("Creating a VirtualListView without height and rowHeight properties should 
 
     appendView();
   },
-  /A ListView must be created with a height and a rowHeight./, "Throws exception.");
+  /Invalid rowHeight: `undefined`/);
 });
