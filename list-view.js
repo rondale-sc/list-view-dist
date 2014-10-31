@@ -1187,11 +1187,7 @@ define("list-view/list_view_mixin",
 
       /**
         @private
-
-        Intelligently manages the number of childviews.
-
-        @method _syncChildViews
-       **/
+      */
       _syncScrollTop: function() {
         var newNumber = this._numChildViewsForViewport();
         var oldNumber = this._oldNumberOfViewsNeededForViewport;
@@ -1216,6 +1212,14 @@ define("list-view/list_view_mixin",
 
       },
 
+
+      /**
+        @private
+
+        Intelligently manages the number of childviews.
+
+        @method _syncChildViews
+       **/
       _syncChildViews: function(){
         var childViews, childViewCount,
             numberOfChildViews, numberOfChildViewsNeeded,
