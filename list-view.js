@@ -1129,6 +1129,7 @@ define("list-view/list_view_mixin",
         @event contentDidChange
       */
       contentDidChange: Ember.observer(function() {
+        this._bin.flush(0);
         addContentArrayObserver.call(this);
         syncChildViews.call(this);
       }, 'content'),
@@ -1340,7 +1341,7 @@ define("list-view/list_view_mixin",
         // Support old and new Ember versions
         state = this._state || this.state;
 
-        this._bin.flush(start);
+        this._bin.flush(start - 1);
         Ember.propertyDidChange(this, 'isGrid');
         var length = this.get('content.length');
 
