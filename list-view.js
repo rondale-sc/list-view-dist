@@ -1341,7 +1341,7 @@ define("list-view/list_view_mixin",
         // Support old and new Ember versions
         state = this._state || this.state;
 
-        this._bin.flush(start - 1);
+        this._bin.flush(start);
         Ember.propertyDidChange(this, 'isGrid');
         var length = this.get('content.length');
 
