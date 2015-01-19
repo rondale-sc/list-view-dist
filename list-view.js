@@ -1639,7 +1639,7 @@ define("list-view/virtual_list_scroller_events",
       var point = e.changedTouches[0],
         target = point.target,
         ev;
-      if (target && fieldRegex.test(target.tagName)) {
+      if (target && !fieldRegex.test(target.tagName)) {
         ev = document.createEvent('MouseEvents');
         ev.initMouseEvent('click', true, true, e.view, 1, point.screenX, point.screenY, point.clientX, point.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, 0, null);
         return target.dispatchEvent(ev);
