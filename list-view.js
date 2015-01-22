@@ -213,19 +213,7 @@ define("list-view/list_item_view",
             }
           }
         }, this);
-      },
-
-      rerender: function () {
-        if (this.isDestroying || this.isDestroyed) {
-          return;
-        }
-
-        return this._super.apply(this, arguments);
-      },
-
-      _contextDidChange: Ember.observer(function () {
-        Ember.run.once(this, this.rerender);
-      }, 'context', 'controller')
+      }
     });
   });
 define("list-view/list_item_view_mixin",
