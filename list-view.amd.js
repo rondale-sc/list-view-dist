@@ -12,7 +12,33 @@ define("list-view/helper",
     var EmberListView = __dependency1__["default"];
     var EmberVirtualListView = __dependency2__["default"];
 
-    function createHelper (view, options) {
+    var EmberVirtualList = createHelper(EmberVirtualListView);
+    var EmberList = createHelper(EmberListView);
+
+    function createHelper(view) {
+      if (Ember.HTMLBars) {
+        return function htmlBarsHelper(params, hash, options, env) {
+          hash.content = hash.items;
+          delete hash.items;
+
+          for (var prop in hash) {
+            if (/-/.test(prop)) {
+              var camelized = Ember.String.camelize(prop);
+              hash[camelized] = hash[prop];
+              delete hash[prop];
+            }
+          }
+
+          /*jshint validthis:true */
+          return Ember.HTMLBars.helpers.collection.helperFunction.call(this, [view], hash, options, env);
+        };
+      }
+      return function handelbarsHelperFactory(options) {
+        return createHandlebarsHelper.call(this, view, options);
+      };
+    }
+
+    function createHandlebarsHelper(view, options) {
       var hash = options.hash;
       var types = options.hashTypes;
 
@@ -41,16 +67,7 @@ define("list-view/helper",
       return Ember.Handlebars.helpers.collection.call(this, view, options);
     }
 
-    function EmberList (options) {
-      return createHelper.call(this, EmberListView, options);
-    }
-
-    __exports__.EmberList = EmberList;__exports__["default"] = EmberList;
-
-    function EmberVirtualList (options) {
-      return createHelper.call(this, EmberVirtualListView, options);
-    }
-
+    __exports__.EmberList = EmberList;
     __exports__.EmberVirtualList = EmberVirtualList;
   });
 define("list-view/list_item_view",
@@ -1341,8 +1358,8 @@ define("list-view/main",
     Ember.ListView             = ListView;
     Ember.ListViewHelper       = ListViewHelper;
 
-    Ember.Handlebars.registerHelper('ember-list', EmberList);
-    Ember.Handlebars.registerHelper('ember-virtual-list', EmberVirtualList);
+    (Ember.HTMLBars || Ember.Handlebars).registerHelper('ember-list', EmberList);
+    (Ember.HTMLBars || Ember.Handlebars).registerHelper('ember-virtual-list', EmberVirtualList);
   });
 define("list-view/reusable_list_item_view",
   ["list-view/list_item_view_mixin","exports"],
